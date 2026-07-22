@@ -1,70 +1,111 @@
 export const dynamic = 'force-dynamic'
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return <AdminLayoutClient>{children}</AdminLayoutClient>
 }
 
-function AdminLayoutClient({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+function AdminLayoutClient({ children }: { children: React.ReactNode }) {
   'use client'
 
   const Link = require('next/link').default
-  const { Button } = require('@/components/ui/button')
-  const { LayoutDashboard, Package, ShoppingCart, LogOut } = require('lucide-react')
+  const { usePathname } = require('next/navigation')
+  const { LayoutDashboard, Package, ShoppingCart, LogOut, Store, TrendingUp, Settings, ChevronRight, Bell } = require('lucide-react')
+  const pathname = usePathname()
+
+  const navItems = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
+    { href: '/admin/productos', label: 'Productos', icon: Package },
+    { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart },
+  ]
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Admin Panel</h1>
-            <p className="text-sm text-muted-foreground">Nuevo El Salvador Shop</p>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <aside className="w-64 bg-gray-900 text-white flex flex-col shrink-0">
+        {/* Logo */}
+        <div className="px-6 py-5 border-b border-gray-800">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-orange-500 rounded-lg flex items-center justify-center">
+              <Store className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-white font-black text-base leading-none">ShopHub</p>
+              <p className="text-gray-400 text-xs mt-0.5">Panel Admin</p>
+            </div>
+          </Link>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider px-3 mb-3">Principal</p>
+          {navItems.map(({ href, label, icon: Icon, exact }) => {
+            const active = exact ? pathname === href : pathname?.startsWith(href)
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                  active
+                    ? 'bg-orange-500 text-white'
+                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                }`}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span>{label}</span>
+                {active && <ChevronRight className="w-3.5 h-3.5 ml-auto" />}
+              </Link>
+            )
+          })}
+
+          <div className="pt-4 mt-4 border-t border-gray-800">
+            <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider px-3 mb-3">Cuenta</p>
+            <Link href="/admin/configuracion" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-all">
+              <Settings className="w-4 h-4" />
+              Configuración
+            </Link>
+            <Link href="/" className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-gray-800 hover:text-white transition-all">
+              <Store className="w-4 h-4" />
+              Ver tienda
+            </Link>
           </div>
+        </nav>
+
+        {/* Logout */}
+        <div className="p-3 border-t border-gray-800">
           <form action="/auth/logout" method="POST">
-            <Button variant="ghost" size="sm" className="gap-2">
+            <button type="submit" className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:bg-red-900/40 hover:text-red-400 transition-all">
               <LogOut className="w-4 h-4" />
-              Cerrar Sesión
-            </Button>
+              Cerrar sesión
+            </button>
           </form>
         </div>
-      </div>
+      </aside>
 
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-6 p-6">
-        {/* Sidebar */}
-        <div className="md:col-span-1">
-          <nav className="space-y-2">
-            <Link href="/admin">
-              <Button variant="ghost" className="w-full justify-start gap-2">
-                <LayoutDashboard className="w-4 h-4" />
-                Dashboard
-              </Button>
-            </Link>
-            <Link href="/admin/productos">
-              <Button variant="ghost" className="w-full justify-start gap-2">
-                <Package className="w-4 h-4" />
-                Productos
-              </Button>
-            </Link>
-            <Link href="/admin/pedidos">
-              <Button variant="ghost" className="w-full justify-start gap-2">
-                <ShoppingCart className="w-4 h-4" />
-                Pedidos
-              </Button>
-            </Link>
-          </nav>
-        </div>
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar */}
+        <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0">
+          <div>
+            <h1 className="text-xl font-black text-gray-900">
+              {navItems.find(n => n.exact ? pathname === n.href : pathname?.startsWith(n.href))?.label || 'Admin'}
+            </h1>
+            <p className="text-sm text-gray-500">Gestiona tu tienda en línea</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
+            </button>
+            <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-bold">A</span>
+            </div>
+          </div>
+        </header>
 
-        {/* Main Content */}
-        <div className="md:col-span-3">
+        {/* Content */}
+        <main className="flex-1 p-6 overflow-auto">
           {children}
-        </div>
+        </main>
       </div>
     </div>
   )
