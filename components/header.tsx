@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { ShoppingCart, User, Search, ChevronDown, Menu, X, Truck, RotateCcw, Smartphone, Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useCart } from '@/lib/cart-context'
 import { useState } from 'react'
 
 const categories = [
@@ -16,6 +17,7 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const isAuthPage = pathname?.includes('/auth')
+  const { cartCount } = useCart()
 
   if (isAuthPage) return null
 
@@ -23,7 +25,7 @@ export function Header() {
     <header className="sticky top-0 z-50 shadow-md">
       {/* Top Announcement Bar */}
       <div className="bg-gray-900 text-white text-xs py-2">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4">
+        <div className="max-w-[1600px] mx-auto px-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-hide">
             <div className="flex items-center gap-1.5 text-green-400 font-medium shrink-0">
               <Truck className="w-3.5 h-3.5" />
@@ -47,7 +49,7 @@ export function Header() {
 
       {/* Main Header */}
       <div className="bg-orange-500">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center gap-4">
+        <div className="max-w-[1600px] mx-auto px-4 h-16 flex items-center gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
             <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
@@ -77,7 +79,7 @@ export function Header() {
             <Link href="/cart" className="relative flex flex-col items-center gap-0.5 text-white hover:text-orange-100 transition-colors p-2">
               <div className="relative">
                 <ShoppingCart className="w-6 h-6" />
-                <span className="absolute -top-2 -right-2 w-5 h-5 bg-yellow-400 text-gray-900 text-xs font-black flex items-center justify-center rounded-full">0</span>
+                <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1 bg-yellow-400 text-gray-900 text-xs font-black flex items-center justify-center rounded-full">{cartCount}</span>
               </div>
               <span className="text-xs hidden sm:block">Carrito</span>
             </Link>
@@ -90,7 +92,7 @@ export function Header() {
 
         {/* Category Nav */}
         <div className="border-t border-orange-400/50">
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="max-w-[1600px] mx-auto px-4">
             <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-1">
               <button className="flex items-center gap-1 text-white text-xs font-semibold whitespace-nowrap px-3 py-1.5 hover:bg-orange-400/40 rounded transition-colors shrink-0">
                 <Menu className="w-3.5 h-3.5" />

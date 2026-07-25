@@ -1,5 +1,6 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
+import { CartProvider } from '@/lib/cart-context'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -41,8 +42,10 @@ export default function RootLayout({
   return (
     <html lang="es" className="bg-background">
       <body className="antialiased bg-background text-foreground">
-        {children}
-        {process.env.NODE_ENV === 'production' && <Analytics />}
+        <CartProvider>
+          {children}
+          {process.env.NODE_ENV === 'production' && <Analytics />}
+        </CartProvider>
       </body>
     </html>
   )

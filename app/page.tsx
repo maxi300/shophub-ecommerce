@@ -2,20 +2,12 @@
 
 import { Header } from '@/components/header'
 import { ProductCard } from '@/components/product-card'
+import { products } from '@/lib/products'
 import { Zap, Truck, Shield, RotateCcw, ChevronRight, Clock, Star, TrendingUp, Gift } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 
-const flashSaleProducts = [
-  { id: '1', name: 'Auriculares Bluetooth 5.0 con cancelación de ruido activa', price: 89.99, discountPrice: 14.99, rating: 4.5, reviewsCount: 2145, badge: 'Top Ventas', badgeColor: 'orange' as const, soldCount: 3200 },
-  { id: '2', name: 'Cargador rápido 65W USB-C compatible con todos los modelos', price: 34.99, discountPrice: 8.49, rating: 4.8, reviewsCount: 1876, soldCount: 5100 },
-  { id: '3', name: 'Smartwatch fitness con GPS y monitor cardíaco', price: 199.99, discountPrice: 39.99, rating: 4.3, reviewsCount: 1203, badge: 'Nuevo', badgeColor: 'blue' as const, soldCount: 890 },
-  { id: '4', name: 'Funda magnética para iPhone 15 Pro con MagSafe', price: 24.99, discountPrice: 6.49, rating: 4.6, reviewsCount: 3421, soldCount: 8900 },
-  { id: '5', name: 'Batería externa 20000mAh carga rápida inalámbrica', price: 79.99, discountPrice: 18.99, rating: 4.7, reviewsCount: 2789, badge: 'Top Ventas', badgeColor: 'orange' as const, soldCount: 4300 },
-  { id: '6', name: 'Cables USB-C trenzados premium pack 3 unidades 2m', price: 29.99, discountPrice: 5.99, rating: 4.4, reviewsCount: 1543, soldCount: 12000 },
-  { id: '7', name: 'Soporte ergonómico de escritorio ajustable para laptop', price: 45.99, discountPrice: 12.49, rating: 4.5, reviewsCount: 987, soldCount: 2100 },
-  { id: '8', name: 'Teclado mecánico gaming retroiluminado RGB compacto', price: 120.00, discountPrice: 34.99, rating: 4.6, reviewsCount: 654, badge: 'Nuevo', badgeColor: 'green' as const, soldCount: 1800 },
-]
+const flashSaleProducts = products
 
 const categories = [
   { name: 'Electrónica', icon: '📱', color: 'from-blue-50 to-blue-100', iconBg: 'bg-blue-100' },
@@ -60,9 +52,6 @@ function FlashSaleTimer() {
 }
 
 export default function Home() {
-  const [cartCount, setCartCount] = useState(0)
-  const handleAddToCart = (id: string) => setCartCount(p => p + 1)
-
   return (
     <>
       <Header />
@@ -70,7 +59,7 @@ export default function Home() {
 
         {/* Hero Banner */}
         <section className="bg-gradient-to-r from-orange-500 via-orange-400 to-amber-400 py-10 md:py-16">
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="max-w-[1600px] mx-auto px-4">
             <div className="grid md:grid-cols-2 gap-8 items-center">
               <div className="text-white space-y-5">
                 <div className="inline-flex items-center gap-2 bg-white/20 text-white text-sm font-semibold px-4 py-1.5 rounded-full">
@@ -114,7 +103,7 @@ export default function Home() {
 
         {/* Trust Bar */}
         <section className="bg-white border-b border-gray-100 py-3">
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="max-w-[1600px] mx-auto px-4">
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
               {[
                 { icon: Truck, text: 'Envío gratis +$30', color: 'text-green-600' },
@@ -133,7 +122,7 @@ export default function Home() {
 
         {/* Trending Searches */}
         <section className="bg-white py-3 border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-4">
+          <div className="max-w-[1600px] mx-auto px-4">
             <div className="flex items-center gap-3 overflow-x-auto scrollbar-hide">
               <div className="flex items-center gap-1.5 text-orange-500 font-semibold text-sm shrink-0">
                 <TrendingUp className="w-4 h-4" />
@@ -153,7 +142,7 @@ export default function Home() {
         </section>
 
         {/* Flash Sales */}
-        <section className="max-w-7xl mx-auto px-4 mt-6">
+        <section className="max-w-[1600px] mx-auto px-4 mt-6">
           <div className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
             {/* Section Header */}
             <div className="bg-gradient-to-r from-red-500 to-orange-500 px-5 py-4 flex items-center justify-between">
@@ -169,14 +158,14 @@ export default function Home() {
             {/* Products */}
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-3">
               {flashSaleProducts.map((p) => (
-                <ProductCard key={p.id} {...p} onAddToCart={() => handleAddToCart(p.id)} />
+                <ProductCard key={p.id} product={p} />
               ))}
             </div>
           </div>
         </section>
 
         {/* Categories */}
-        <section className="max-w-7xl mx-auto px-4 mt-6">
+        <section className="max-w-[1600px] mx-auto px-4 mt-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-black text-gray-900 flex items-center gap-2">
@@ -203,7 +192,7 @@ export default function Home() {
         </section>
 
         {/* More Products */}
-        <section className="max-w-7xl mx-auto px-4 mt-6 mb-8">
+        <section className="max-w-[1600px] mx-auto px-4 mt-6 mb-8">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-lg font-black text-gray-900">Recomendado para ti</h2>
@@ -213,7 +202,7 @@ export default function Home() {
             </div>
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-3">
               {flashSaleProducts.slice(0, 4).map((p) => (
-                <ProductCard key={`rec-${p.id}`} {...p} badge={undefined} onAddToCart={() => handleAddToCart(p.id)} />
+                <ProductCard key={`rec-${p.id}`} product={{ ...p, badge: undefined }} />
               ))}
             </div>
           </div>
@@ -221,7 +210,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="bg-gray-900 text-gray-300">
-          <div className="max-w-7xl mx-auto px-4 py-12">
+          <div className="max-w-[1600px] mx-auto px-4 py-12">
             <div className="grid md:grid-cols-4 gap-8 mb-8">
               <div>
                 <div className="flex items-center gap-2 mb-3">

@@ -1,43 +1,34 @@
 'use client'
 
-import { Star, ShoppingCart, Heart } from 'lucide-react'
+import { ShoppingCart, Heart } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useCart } from '@/lib/cart-context'
+import type { Product } from '@/lib/products'
 
 interface ProductCardProps {
-  id: string
-  name: string
-  price: number
-  discountPrice?: number
-  imageUrl?: string
-  rating: number
-  reviewsCount: number
-  badge?: string
-  badgeColor?: 'orange' | 'green' | 'red' | 'blue'
-  soldCount?: number
-  onAddToCart?: () => void
+  product: Product
 }
 
-export function ProductCard({
-  id,
-  name,
-  price,
-  discountPrice,
-  imageUrl,
-  rating,
-  reviewsCount,
-  badge,
-  badgeColor = 'orange',
-  soldCount,
-  onAddToCart,
-}: ProductCardProps) {
+export function ProductCard({ product }: ProductCardProps) {
+  const { id, name, price, discountPrice, imageUrl, badge, badgeColor = 'orange', soldCount } = product
   const [wishlisted, setWishlisted] = useState(false)
+  const { addToCart } = useCart()
   const discount = discountPrice ? Math.round(((price - discountPrice) / price) * 100) : 0
   const displayPrice = discountPrice || price
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    addToCart(product, { quantity: 1 })
+  }
+
   return (
-    <div className="group relative bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5">
+    <Link
+      href={`/product/${id}`}
+      className="group relative block bg-white rounded-lg overflow-hidden border border-gray-100 hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5"
+    >
       {/* Image */}
       <div className="relative w-full aspect-square bg-gray-50 overflow-hidden">
         {imageUrl ? (
@@ -72,7 +63,11 @@ export function ProductCard({
 
         {/* Wishlist */}
         <button
-          onClick={() => setWishlisted(!wishlisted)}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            setWishlisted(!wishlisted)
+          }}
           className="absolute top-2 right-2 w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow transition-all opacity-0 group-hover:opacity-100"
         >
           <Heart className={`w-3.5 h-3.5 ${wishlisted ? 'fill-red-500 text-red-500' : 'text-gray-500'}`} />
@@ -81,7 +76,7 @@ export function ProductCard({
         {/* Add to cart overlay */}
         <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
           <button
-            onClick={onAddToCart}
+            onClick={handleAddToCart}
             className="w-full bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold py-2.5 flex items-center justify-center gap-1.5 transition-colors"
           >
             <ShoppingCart className="w-3.5 h-3.5" />
@@ -92,24 +87,9 @@ export function ProductCard({
 
       {/* Info */}
       <div className="p-2.5">
-        <Link href={`/product/${id}`}>
-          <p className="text-xs text-gray-700 line-clamp-2 hover:text-orange-500 transition-colors leading-4 mb-2">
-            {name}
-          </p>
-        </Link>
-
-        {/* Stars */}
-        <div className="flex items-center gap-1 mb-1.5">
-          <div className="flex">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={`w-3 h-3 ${i < Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-gray-200 fill-gray-200'}`}
-              />
-            ))}
-          </div>
-          <span className="text-xs text-gray-400">({reviewsCount.toLocaleString('es')})</span>
-        </div>
+        <p className="text-xs text-gray-700 line-clamp-2 group-hover:text-orange-500 transition-colors leading-4 mb-2">
+          {name}
+        </p>
 
         {/* Price */}
         <div className="flex items-baseline gap-1.5">
@@ -123,6 +103,6 @@ export function ProductCard({
           <p className="text-xs text-gray-400 mt-0.5">{soldCount.toLocaleString('es')}+ vendidos</p>
         )}
       </div>
-    </div>
+    </Link>
   )
 }
