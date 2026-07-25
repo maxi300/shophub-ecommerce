@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useState } from 'react'
 
 export default function Page() {
@@ -21,6 +21,7 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,19 +30,18 @@ export default function Page() {
     setError(null)
 
     try {
+      // signInWithPassword no acepta emailRedirectTo (eso es solo para signUp / magic links)
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
-            `${window.location.origin}/auth/callback`,
-        },
       })
       if (error) throw error
-      router.push('/protected')
+
+      const next = searchParams.get('next') ?? '/'
+      router.push(next)
+      router.refresh()
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      setError(error instanceof Error ? error.message : 'Ocurrió un error al iniciar sesión')
     } finally {
       setIsLoading(false)
     }
@@ -53,9 +53,9 @@ export default function Page() {
         <div className="flex flex-col gap-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-2xl">Login</CardTitle>
+              <CardTitle className="text-2xl">Iniciar sesión</CardTitle>
               <CardDescription>
-                Enter your email below to login to your account
+                Ingresa tu correo para acceder a tu cuenta
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -83,17 +83,17 @@ export default function Page() {
                     />
                   </div>
                   {error && <p className="text-sm text-red-500">{error}</p>}
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? 'Logging in...' : 'Login'}
+                  <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={isLoading}>
+                    {isLoading ? 'Ingresando...' : 'Ingresar'}
                   </Button>
                 </div>
                 <div className="mt-4 text-center text-sm">
-                  Don&apos;t have an account?{' '}
+                  ¿No tienes cuenta?{' '}
                   <Link
                     href="/auth/sign-up"
                     className="underline underline-offset-4"
                   >
-                    Sign up
+                    Regístrate
                   </Link>
                 </div>
               </form>
