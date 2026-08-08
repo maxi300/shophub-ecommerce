@@ -5,17 +5,17 @@ import { CartItemsSection } from '@/components/cart-items-section'
 import { CartSummary } from '@/components/cart-summary'
 import { useCart } from '@/lib/cart-context'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation' // <-- Importamos useRouter
 import { ChevronRight } from 'lucide-react'
 
 export default function CartPage() {
+  const router = useRouter()
   const { items, updateQuantity, removeItem, subtotal } = useCart()
 
   const discount = subtotal > 50 ? 5 : 0
   const shipping = items.length === 0 ? 0 : subtotal > 50 ? 0 : 9.99
   const tax = (subtotal - discount) * 0.08
 
-  // Map cart items to the shape expected by CartItemsSection, including
-  // color/size so the selected variant is visible in the cart.
   const displayItems = items.map((item) => ({
     id: item.lineId,
     productId: item.productId,
@@ -33,8 +33,9 @@ export default function CartPage() {
     removeItem(lineId)
   }
 
+  // Redirección corregida hacia la página de checkout
   const handleCheckout = () => {
-    alert('Ir al checkout...')
+    router.push('/checkout')
   }
 
   return (

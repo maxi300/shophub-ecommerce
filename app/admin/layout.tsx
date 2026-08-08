@@ -1,15 +1,20 @@
-export const dynamic = 'force-dynamic'
+'use client'
+
+import React from 'react'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { 
+  LayoutDashboard, 
+  Package, 
+  ShoppingCart, 
+  LogOut, 
+  Store, 
+  Settings, 
+  ChevronRight, 
+  Bell 
+} from 'lucide-react'
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <AdminLayoutClient>{children}</AdminLayoutClient>
-}
-
-function AdminLayoutClient({ children }: { children: React.ReactNode }) {
-  'use client'
-
-  const Link = require('next/link').default
-  const { usePathname } = require('next/navigation')
-  const { LayoutDashboard, Package, ShoppingCart, LogOut, Store, TrendingUp, Settings, ChevronRight, Bell } = require('lucide-react')
   const pathname = usePathname()
 
   const navItems = [

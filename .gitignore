@@ -13,3 +13,17 @@ __v0_jsx-dev-runtime.ts
 node_modules
 .next/
 .DS_Store
+
+# Dependencias
+node_modules/
+.pnp
+.pnp.js
+
+# Variables de entorno locales (¡Muy importante!)
+.env
+.env.local
+.env*.local
+
+# Build de Next.js
+.next/
+out/

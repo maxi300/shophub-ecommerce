@@ -5,33 +5,12 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'ShopHub - Your Ultimate Shopping Destination',
-  description: 'Discover amazing products with incredible deals on ShopHub. Fast shipping, secure checkout, and trusted sellers.',
-  generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
+  description: 'Discover amazing products with incredible deals on ShopHub.',
 }
 
 export const viewport: Viewport = {
   colorScheme: 'light dark',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#FF7A3D' },
-    { media: '(prefers-color-scheme: dark)', color: '#FF7A3D' },
-  ],
+  themeColor: '#FF7A3D',
 }
 
 export default function RootLayout({
@@ -40,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className="bg-background">
+    <html lang="es" className="bg-background" suppressHydrationWarning>
       <body className="antialiased bg-background text-foreground">
         <CartProvider>
           {children}
