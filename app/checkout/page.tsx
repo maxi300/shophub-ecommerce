@@ -25,6 +25,9 @@ export default function CheckoutPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Bloqueo estricto por doble clic o si ya está cargando
+    if (loading) return;
+
     if (isDuiRequired && !formData.customerDocumentId.trim()) {
       alert('Por normativa fiscal de El Salvador, las compras de $200.00 USD o más requieren indicar el DUI o NIT.');
       return;
@@ -65,7 +68,6 @@ export default function CheckoutPage() {
         throw new Error(data.error || 'Error al procesar la orden.');
       }
 
-      // Redirección hacia la URL oficial de Wompi recibida
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       } else {
@@ -75,7 +77,7 @@ export default function CheckoutPage() {
     } catch (err: any) {
       console.error(err);
       alert(err.message || 'Ocurrió un error al procesar la compra.');
-      setLoading(false);
+      setLoading(false); // Solo liberamos si ocurre un error para permitir reintentar
     }
   };
 
@@ -105,9 +107,10 @@ export default function CheckoutPage() {
                 <input
                   type="text"
                   required
+                  disabled={loading}
                   value={formData.firstName}
                   onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none disabled:opacity-50"
                   placeholder="Ej. Max"
                 />
               </div>
@@ -116,9 +119,10 @@ export default function CheckoutPage() {
                 <input
                   type="text"
                   required
+                  disabled={loading}
                   value={formData.lastName}
                   onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none disabled:opacity-50"
                   placeholder="Ej. Ramos"
                 />
               </div>
@@ -129,9 +133,10 @@ export default function CheckoutPage() {
               <input
                 type="email"
                 required
+                disabled={loading}
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none disabled:opacity-50"
                 placeholder="correo@ejemplo.com"
               />
             </div>
@@ -141,9 +146,10 @@ export default function CheckoutPage() {
               <input
                 type="text"
                 required
+                disabled={loading}
                 value={formData.address}
                 onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none disabled:opacity-50"
                 placeholder="Avenida México"
               />
             </div>
@@ -154,9 +160,10 @@ export default function CheckoutPage() {
                 <input
                   type="text"
                   required
+                  disabled={loading}
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none disabled:opacity-50"
                   placeholder="San Miguel"
                 />
               </div>
@@ -164,9 +171,10 @@ export default function CheckoutPage() {
                 <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-2">Departamento</label>
                 <input
                   type="text"
+                  disabled={loading}
                   value={formData.postalCode}
                   onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none disabled:opacity-50"
                   placeholder="San Miguel"
                 />
               </div>
@@ -185,9 +193,10 @@ export default function CheckoutPage() {
                   type="text"
                   placeholder="00000000-0"
                   required={isDuiRequired}
+                  disabled={loading}
                   value={formData.customerDocumentId}
                   onChange={(e) => setFormData({ ...formData, customerDocumentId: e.target.value })}
-                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-zinc-100 text-sm focus:ring-2 focus:ring-orange-500 outline-none disabled:opacity-50"
                 />
               </div>
             </div>
@@ -201,10 +210,10 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={loading || items.length === 0}
-                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3.5 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 disabled:bg-zinc-800 disabled:text-zinc-600"
+                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold py-3.5 px-4 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20 disabled:bg-zinc-800 disabled:text-zinc-600 cursor-pointer disabled:cursor-not-allowed"
               >
                 <CreditCard className="w-5 h-5" />
-                {loading ? 'Generando Enlace de Pago...' : 'Pagar con Tarjeta (Wompi)'}
+                {loading ? 'Redirigiendo a pasarela...' : 'Pagar con Tarjeta (Wompi)'}
               </button>
             </div>
           </form>

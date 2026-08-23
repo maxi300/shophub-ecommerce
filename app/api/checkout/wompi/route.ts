@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -6,7 +7,8 @@ export async function POST(req: Request) {
   try {
     const cookieStore = await cookies();
 
-    const supabase = createServerClient(
+    // 1. Cliente para autenticar al usuario (saber quién está comprando si ha iniciado sesión)
+    const supabaseAuth = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
       {
@@ -27,15 +29,25 @@ export async function POST(req: Request) {
 
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await supabaseAuth.auth.getUser();
 
     const body = await req.json();
-    const { total, shippingAddress, customerInfo, documentType, customerDocumentId } = body;
+    const { total, shippingAddress, customerInfo, documentType, customerDocumentId, items } = body;
 
     const parsedTotal = parseFloat(Number(total).toFixed(2));
 
-    // 1. Guardar la orden en Supabase
-    const { data: order, error: orderError } = await supabase
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return NextResponse.json({ error: 'No se especificaron productos en el carrito.' }, { status: 400 });
+    }
+
+    // 2. Cliente Admin con Service Role para evitar bloqueos de RLS al insertar la orden e ítems
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    // 3. Insertar directamente en la tabla orders usando el cliente Admin
+    const { data: orderData, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
         user_id: user?.id || null,
@@ -43,7 +55,6 @@ export async function POST(req: Request) {
         subtotal: parsedTotal,
         status: 'pending',
         payment_method: 'wompi',
-        payment_status: 'pending',
         shipping_address: shippingAddress.address,
         shipping_city: shippingAddress.city,
         shipping_postal_code: shippingAddress.postalCode || null,
@@ -51,13 +62,34 @@ export async function POST(req: Request) {
         notes: `Cliente: ${customerInfo.firstName} ${customerInfo.lastName} - Email: ${customerInfo.email}`,
         document_type: documentType || '01',
         customer_document_id: customerDocumentId || null,
+        customer_business_name: `${customerInfo.firstName} ${customerInfo.lastName}`
       })
-      .select()
+      .select('id')
       .single();
 
-    if (orderError) {
-      console.error('Error insertando orden:', orderError);
-      return NextResponse.json({ error: orderError.message }, { status: 500 });
+    if (orderError || !orderData) {
+      console.error('Error al crear orden en Supabase:', orderError);
+      return NextResponse.json({ error: orderError?.message || 'Error al registrar la orden' }, { status: 500 });
+    }
+
+    const orderId = orderData.id;
+
+    // 4. Insertar los ítems asociados en la tabla order_items usando el cliente Admin
+    const orderItemsPayload = items.map((item: any) => ({
+      order_id: orderId,
+      product_id: item.id,
+      quantity: item.quantity,
+      price: item.price,
+      variant_selections: item.variantSelections || null
+    }));
+
+    const { error: itemsError } = await supabaseAdmin
+      .from('order_items')
+      .insert(orderItemsPayload);
+
+    if (itemsError) {
+      console.error('Error al registrar items de la orden:', itemsError);
+      return NextResponse.json({ error: 'Error al registrar los productos de la orden' }, { status: 500 });
     }
 
     const clientId = process.env.WOMPI_APP_ID?.trim() || '';
@@ -70,7 +102,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Autenticación contra Wompi El Salvador
+    // 5. Autenticación contra Wompi El Salvador
     const authResponse = await fetch('https://id.wompi.sv/connect/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -91,11 +123,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Crear el Enlace de Pago API en Wompi
+    // 6. Crear el Enlace de Pago API en Wompi precargando los datos del cliente
     const wompiPayload = {
-      identificadorEnlaceComercio: order.id,
+      identificadorEnlaceComercio: orderId,
       monto: parsedTotal,
-      nombreProducto: `Orden #${order.id.slice(0, 8)}`,
+      nombreProducto: `Orden #${orderId.slice(0, 8)}`,
+      cliente: {
+        correoElectronico: customerInfo.email,
+        nombres: customerInfo.firstName,
+        apellidos: customerInfo.lastName,
+      },
       formaPago: {
         permitirTarjetaCreditoDebido: true,
         permitirPagoConPuntos: false,
@@ -104,7 +141,7 @@ export async function POST(req: Request) {
       esMontoEditable: false,
       esCantidadEditable: false,
       cantidad: 1,
-      redireccionUrl: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/checkout/success?order_id=${order.id}`,
+      urlRedireccion: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://1294-2800-b20-108b-736d-70c2-2686-5d8-1b22.ngrok-free.app/'}/checkout/success?order_id=${orderId}`,
     };
 
     const wompiResponse = await fetch('https://api.wompi.sv/EnlacePago', {
@@ -117,8 +154,6 @@ export async function POST(req: Request) {
     });
 
     const wompiData = await wompiResponse.json();
-
-    // Mapeo correcto de los campos de respuesta que envía Wompi El Salvador
     const checkoutUrl = wompiData.urlEnlace || wompiData.urlEnlaceLargo || wompiData.urlEnlacePago;
 
     if (!wompiResponse.ok || !checkoutUrl) {
@@ -133,9 +168,8 @@ export async function POST(req: Request) {
       );
     }
 
-    // Retorna la URL corta de Wompi (ej. https://s.wompi.sv/2079616tmJ)
     return NextResponse.json({
-      orderId: order.id,
+      orderId: orderId,
       checkoutUrl: checkoutUrl,
     });
 

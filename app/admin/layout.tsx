@@ -19,9 +19,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, exact: true },
-    { href: '/admin/productos', label: 'Productos', icon: Package },
-    { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart },
+    { href: '/admin/productos', label: 'Productos', icon: Package, exact: true },
+    { href: '/admin/pedidos', label: 'Pedidos', icon: ShoppingCart, exact: true },
   ]
+
+  // Función segura para determinar si la ruta está activa sin colisiones
+  const isRouteActive = (href: string, exact?: boolean) => {
+    if (exact) {
+      return pathname === href
+    }
+    return pathname?.startsWith(href)
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -44,7 +52,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="flex-1 px-3 py-4 space-y-1">
           <p className="text-gray-500 text-xs font-semibold uppercase tracking-wider px-3 mb-3">Principal</p>
           {navItems.map(({ href, label, icon: Icon, exact }) => {
-            const active = exact ? pathname === href : pathname?.startsWith(href)
+            const active = isRouteActive(href, exact)
             return (
               <Link
                 key={href}
@@ -92,7 +100,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0">
           <div>
             <h1 className="text-xl font-black text-gray-900">
-              {navItems.find(n => n.exact ? pathname === n.href : pathname?.startsWith(n.href))?.label || 'Admin'}
+              {navItems.find(n => isRouteActive(n.href, n.exact))?.label || 'Admin'}
             </h1>
             <p className="text-sm text-gray-500">Gestiona tu tienda en línea</p>
           </div>

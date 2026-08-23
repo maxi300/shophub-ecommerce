@@ -8,15 +8,21 @@ import { useCart } from '@/lib/cart-context'
 import type { Product } from '@/lib/products'
 
 interface ProductCardProps {
-  product: Product
+  product: Product & { images?: string[] } // Soportamos ambos formatos (imageUrl o images[])
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { id, name, price, discountPrice, imageUrl, badge, badgeColor = 'orange', soldCount } = product
+  const { id, name, price, discountPrice, imageUrl, images, badge, badgeColor = 'orange', soldCount } = product
   const [wishlisted, setWishlisted] = useState(false)
   const { addToCart } = useCart()
   const discount = discountPrice ? Math.round(((price - discountPrice) / price) * 100) : 0
   const displayPrice = discountPrice || price
+
+  // Lógica segura para extraer la imagen: prioriza el arreglo de Supabase (images[0]), luego imageUrl o un placeholder
+  const resolvedImageUrl = 
+    (images && images.length > 0 && images[0]) || 
+    imageUrl || 
+    '/placeholder.png'
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -31,9 +37,9 @@ export function ProductCard({ product }: ProductCardProps) {
     >
       {/* Image */}
       <div className="relative w-full aspect-square bg-gray-50 overflow-hidden">
-        {imageUrl ? (
+        {resolvedImageUrl ? (
           <Image
-            src={imageUrl}
+            src={resolvedImageUrl}
             alt={name}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
