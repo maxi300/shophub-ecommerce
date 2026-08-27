@@ -13,9 +13,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 
-export default function Page() {
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -30,7 +30,6 @@ export default function Page() {
     setError(null)
 
     try {
-      // signInWithPassword no acepta emailRedirectTo (eso es solo para signUp / magic links)
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -48,6 +47,49 @@ export default function Page() {
   }
 
   return (
+    <form onSubmit={handleLogin}>
+      <div className="flex flex-col gap-6">
+        <div className="grid gap-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="m@example.com"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        {error && <p className="text-sm text-red-500">{error}</p>}
+        <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={isLoading}>
+          {isLoading ? 'Ingresando...' : 'Ingresar'}
+        </Button>
+      </div>
+      <div className="mt-4 text-center text-sm">
+        ¿No tienes cuenta?{' '}
+        <Link
+          href="/auth/sign-up"
+          className="underline underline-offset-4"
+        >
+          Regístrate
+        </Link>
+      </div>
+    </form>
+  )
+}
+
+export default function Page() {
+  return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
         <div className="flex flex-col gap-6">
@@ -59,44 +101,9 @@ export default function Page() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleLogin}>
-                <div className="flex flex-col gap-6">
-                  <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="m@example.com"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="password">Password</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </div>
-                  {error && <p className="text-sm text-red-500">{error}</p>}
-                  <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600" disabled={isLoading}>
-                    {isLoading ? 'Ingresando...' : 'Ingresar'}
-                  </Button>
-                </div>
-                <div className="mt-4 text-center text-sm">
-                  ¿No tienes cuenta?{' '}
-                  <Link
-                    href="/auth/sign-up"
-                    className="underline underline-offset-4"
-                  >
-                    Regístrate
-                  </Link>
-                </div>
-              </form>
+              <Suspense fallback={<div className="text-center py-4 text-sm text-slate-500">Cargando...</div>}>
+                <LoginForm />
+              </Suspense>
             </CardContent>
           </Card>
         </div>

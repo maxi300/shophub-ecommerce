@@ -1,3 +1,5 @@
+
+
 // app/checkout/page.tsx
 'use client';
 
@@ -25,15 +27,24 @@ export default function CheckoutPage() {
 
   const isDuiRequired = totalAmount >= 200
 
+  // Validador centralizado de campos del formulario
+  const validateForm = () => {
+    if (!formData.firstName.trim() || !formData.lastName.trim() || !formData.email.trim() || !formData.address.trim() || !formData.city.trim()) {
+      alert('Por favor completa todos los campos obligatorios de contacto y dirección.');
+      return false;
+    }
+    if (isDuiRequired && !formData.customerDocumentId.trim()) {
+      alert('Por normativa fiscal de El Salvador, las compras de $200.00 USD o más requieren indicar el DUI o NIT.');
+      return false;
+    }
+    return true;
+  }
+
   // Manejador exclusivo para Wompi
   const handleWompiSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (loading) return
-
-    if (isDuiRequired && !formData.customerDocumentId.trim()) {
-      alert('Por normativa fiscal de El Salvador, las compras de $200.00 USD o más requieren indicar el DUI o NIT.')
-      return
-    }
+    if (!validateForm()) return
 
     setLoading(true)
 
@@ -45,10 +56,7 @@ export default function CheckoutPage() {
           items: items.map(item => ({
             id: item.productId,
             quantity: item.quantity,
-            price: item.price,
-            name: item.name,
           })),
-          total: totalAmount,
           shippingAddress: {
             address: formData.address,
             city: formData.city,
@@ -68,7 +76,13 @@ export default function CheckoutPage() {
       if (!response.ok) throw new Error(data.error || 'Error al procesar la orden con Wompi.')
 
       if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl
+        clearCart()
+        localStorage.removeItem('cart')
+        localStorage.removeItem('cart-storage')
+        localStorage.removeItem('shopping-cart')
+        sessionStorage.clear()
+
+        window.location.replace(data.checkoutUrl)
       } else {
         throw new Error('No se recibió la URL de la pasarela Wompi.')
       }
@@ -113,7 +127,8 @@ export default function CheckoutPage() {
             </span>
           </div>
 
-          <form onSubmit={handleWompiSubmit} className="space-y-6">
+          {/* Se desvincula el onSubmit global para manejar el flujo por método de pago */}
+          <div className="space-y-6">
             
             {/* 1. Contacto */}
             <div className="space-y-4">
@@ -123,7 +138,6 @@ export default function CheckoutPage() {
                   <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Nombre</label>
                   <input
                     type="text"
-                    required
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     className="w-full bg-white border border-slate-300 rounded-2xl px-4 py-3 text-slate-900 text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none"
@@ -134,7 +148,6 @@ export default function CheckoutPage() {
                   <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Apellido</label>
                   <input
                     type="text"
-                    required
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     className="w-full bg-white border border-slate-300 rounded-2xl px-4 py-3 text-slate-900 text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none"
@@ -147,7 +160,6 @@ export default function CheckoutPage() {
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Correo Electrónico</label>
                 <input
                   type="email"
-                  required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="w-full bg-white border border-slate-300 rounded-2xl px-4 py-3 text-slate-900 text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none"
@@ -163,7 +175,6 @@ export default function CheckoutPage() {
                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Dirección de Entrega</label>
                 <input
                   type="text"
-                  required
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   className="w-full bg-white border border-slate-300 rounded-2xl px-4 py-3 text-slate-900 text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none"
@@ -176,7 +187,6 @@ export default function CheckoutPage() {
                   <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Municipio / Ciudad</label>
                   <input
                     type="text"
-                    required
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     className="w-full bg-white border border-slate-300 rounded-2xl px-4 py-3 text-slate-900 text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none"
@@ -206,7 +216,6 @@ export default function CheckoutPage() {
                 <input
                   type="text"
                   placeholder="00000000-0"
-                  required={isDuiRequired}
                   value={formData.customerDocumentId}
                   onChange={(e) => setFormData({ ...formData, customerDocumentId: e.target.value })}
                   className="w-full bg-white border border-slate-300 rounded-2xl px-4 py-3 text-slate-900 text-sm font-medium focus:ring-2 focus:ring-orange-500 outline-none"
@@ -237,15 +246,9 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!formData.firstName || !formData.lastName || !formData.email || !formData.address || !formData.city) {
-                      alert('Por favor completa los campos de contacto y dirección antes de seleccionar PayPal.');
-                      return;
+                    if (validateForm()) {
+                      setPaymentMethod('paypal');
                     }
-                    if (isDuiRequired && !formData.customerDocumentId.trim()) {
-                      alert('Por normativa fiscal de El Salvador, las compras de $200.00 USD o más requieren indicar el DUI o NIT.');
-                      return;
-                    }
-                    setPaymentMethod('paypal');
                   }}
                   className={`flex items-center gap-3 p-4 rounded-2xl border text-left transition-all cursor-pointer ${
                     paymentMethod === 'paypal' ? 'border-orange-500 bg-orange-50/50 ring-2 ring-orange-500/20' : 'border-slate-200 bg-white'
@@ -271,7 +274,8 @@ export default function CheckoutPage() {
 
               {paymentMethod === 'wompi' ? (
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleWompiSubmit}
                   disabled={loading || items.length === 0}
                   className="w-full bg-orange-600 hover:bg-orange-700 text-white font-black py-4 px-6 rounded-2xl transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-orange-600/20 cursor-pointer disabled:bg-slate-200 disabled:text-slate-400 text-base"
                 >
@@ -280,12 +284,16 @@ export default function CheckoutPage() {
                 </button>
               ) : (
                 <div className="p-4 bg-blue-50/50 border border-blue-200 rounded-2xl space-y-3">
-                  <p className="text-xs font-bold text-blue-900 text-center">Datos listos. Usa los botones de PayPal:</p>
+                  <p className="text-xs font-bold text-blue-900 text-center">Datos validados. Usa los botones de PayPal:</p>
                   
                   <PayPalScriptProvider options={{ clientId: process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '', currency: 'USD' }}>
                     <PayPalButtons
                       style={{ layout: 'vertical' }}
                       createOrder={async () => {
+                        if (!validateForm()) {
+                          throw new Error('Faltan campos obligatorios');
+                        }
+
                         const res = await fetch('/api/checkout/paypal/create', {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
@@ -293,10 +301,7 @@ export default function CheckoutPage() {
                             items: items.map(item => ({
                               id: item.productId,
                               quantity: item.quantity,
-                              price: item.price,
-                              name: item.name,
                             })),
-                            total: totalAmount,
                             shippingAddress: {
                               address: formData.address,
                               city: formData.city,
@@ -314,7 +319,6 @@ export default function CheckoutPage() {
                         const data = await res.json()
                         if (!res.ok) throw new Error(data.error || 'Error al crear la orden de PayPal')
 
-                        // Guardamos el orderId interno temporalmente en memoria
                         ;(window as any).__paypalInternalOrderId = data.orderId
 
                         return data.paypalOrderId
@@ -333,10 +337,12 @@ export default function CheckoutPage() {
                         const captureData = await res.json()
                         if (!res.ok) throw new Error(captureData.error || 'Error al capturar el pago de PayPal')
 
-                        // Vaciamos el carrito de manera local justo aquí tras el éxito del pago
                         clearCart()
+                        localStorage.removeItem('cart')
+                        localStorage.removeItem('cart-storage')
+                        localStorage.removeItem('shopping-cart')
+                        sessionStorage.clear()
 
-                        // Redirigimos usando replace para bloquear el retroceso
                         window.location.replace(`/checkout/success?order_id=${internalOrderId}&paypalOrderId=${data.orderID}`)
                       }}
                     />
@@ -349,9 +355,10 @@ export default function CheckoutPage() {
                 <span>Tus datos de pago son encriptados y procesados de forma segura.</span>
               </div>
             </div>
-          </form>
+          </div>
         </div>
       </div>
     </div>
   )
 }
+

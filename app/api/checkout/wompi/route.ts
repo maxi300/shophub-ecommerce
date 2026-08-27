@@ -141,7 +141,7 @@ export async function POST(req: Request) {
       esMontoEditable: false,
       esCantidadEditable: false,
       cantidad: 1,
-      urlRedireccion: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://1294-2800-b20-108b-736d-70c2-2686-5d8-1b22.ngrok-free.app/'}/checkout/success?order_id=${orderId}`,
+      urlRedireccion: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://b831-138-97-141-210.ngrok-free.app/'}/checkout/success?order_id=${orderId}`,
     };
 
     const wompiResponse = await fetch('https://api.wompi.sv/EnlacePago', {

@@ -107,7 +107,7 @@ export default function AdminProductsContent() {
         if (error) throw error
 
         setProducts(
-          products.map((p) => (p.id === editingId ? { ...p, ...payload } : p))
+          products.map((p) => (p.id === editingId ? { ...p, ...payload } : p))as any
         )
       } else {
         // Create
