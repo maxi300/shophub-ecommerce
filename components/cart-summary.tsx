@@ -24,90 +24,98 @@ export function CartSummary({
   const total = subtotal - discount + shipping + tax
 
   return (
-    <div className="sticky top-20 bg-card border border-border rounded-lg p-6 space-y-6">
-      {/* Title */}
+    <div className="bg-white border border-slate-200/80 rounded-3xl p-6 md:p-7 space-y-6 shadow-xl shadow-slate-200/50 relative overflow-hidden">
+      {/* Título de la sección */}
       <div>
-        <h2 className="text-lg font-bold text-foreground">Resumen del Pedido</h2>
-        <p className="text-sm text-muted-foreground">{itemCount} artículos</p>
+        <h2 className="text-xl font-black text-slate-900 tracking-tight">Resumen del Pedido</h2>
+        <p className="text-xs font-semibold text-slate-400 mt-0.5">{itemCount} {itemCount === 1 ? 'artículo seleccionado' : 'artículos seleccionados'}</p>
       </div>
 
-      {/* Breakdown */}
-      <div className="space-y-3 border-b border-border pb-4">
+      {/* Desglose de costos */}
+      <div className="space-y-3.5 border-y border-slate-100 py-5">
         <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Subtotal</span>
-          <span className="text-foreground font-medium">${subtotal.toFixed(2)}</span>
+          <span className="text-slate-500 font-medium">Subtotal</span>
+          <span className="text-slate-900 font-bold">${subtotal.toFixed(2)}</span>
         </div>
 
         {discount > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Descuento</span>
-            <span className="text-primary font-medium">-${discount.toFixed(2)}</span>
+            <span className="text-slate-500 font-medium">Descuento aplicado</span>
+            <span className="text-orange-600 font-bold">-${discount.toFixed(2)}</span>
           </div>
         )}
 
         {shipping > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Envío</span>
-            <span className="text-foreground font-medium">${shipping.toFixed(2)}</span>
+            <span className="text-slate-500 font-medium">Costo de envío</span>
+            <span className="text-slate-900 font-bold">${shipping.toFixed(2)}</span>
           </div>
         )}
 
         {tax > 0 && (
           <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Impuestos</span>
-            <span className="text-foreground font-medium">${tax.toFixed(2)}</span>
+            <span className="text-slate-500 font-medium">Impuestos estimados</span>
+            <span className="text-slate-900 font-bold">${tax.toFixed(2)}</span>
           </div>
         )}
       </div>
 
-      {/* Total */}
-      <div className="flex justify-between items-center">
-        <span className="text-foreground font-semibold">Total</span>
-        <div className="flex flex-col items-end">
-          <span className="text-2xl font-bold text-primary">${total.toFixed(2)}</span>
-          <span className="text-xs text-muted-foreground">Antes del pago final</span>
+      {/* Total limpio */}
+      <div className="flex items-baseline justify-between pt-1">
+        <div>
+          <span className="text-base font-black text-slate-900 block">Total a pagar</span>
+          <span className="text-[11px] text-slate-400 font-medium">Impuestos y envío incluidos</span>
+        </div>
+        <div className="text-right">
+          <span className="text-3xl font-black text-orange-600 tracking-tight">${total.toFixed(2)}</span>
         </div>
       </div>
 
-      {/* Benefits */}
-      <div className="space-y-2 pt-4 border-t border-border">
-        <div className="flex items-start gap-3">
-          <Truck className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+      {/* Beneficios de confianza */}
+      <div className="space-y-3 pt-2">
+        <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-100">
+          <div className="p-2 bg-orange-100/70 rounded-xl text-orange-600 shrink-0">
+            <Truck className="w-4 h-4" />
+          </div>
           <div>
-            <p className="text-sm font-medium text-foreground">Envío Gratis</p>
-            <p className="text-xs text-muted-foreground">En compras mayores a $50</p>
+            <p className="text-xs font-bold text-slate-900">Envío Gratis disponible</p>
+            <p className="text-[11px] text-slate-500">En compras mayores a $50</p>
           </div>
         </div>
-        <div className="flex items-start gap-3">
-          <Lock className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+
+        <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-100">
+          <div className="p-2 bg-orange-100/70 rounded-xl text-orange-600 shrink-0">
+            <Lock className="w-4 h-4" />
+          </div>
           <div>
-            <p className="text-sm font-medium text-foreground">Pago Seguro</p>
-            <p className="text-xs text-muted-foreground">Datos encriptados y protegidos</p>
+            <p className="text-xs font-bold text-slate-900">Checkout Encriptado</p>
+            <p className="text-[11px] text-slate-500">Tus datos están protegidos</p>
           </div>
         </div>
       </div>
 
-      {/* CTA Button */}
-      <Button
-        onClick={onCheckout}
-        disabled={itemCount === 0}
-        className="w-full bg-primary hover:bg-primary/90 text-primary-foreground text-base font-semibold h-12 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Ir al Pago
-        <ArrowRight className="w-4 h-4" />
-      </Button>
-
-      {/* Continue Shopping */}
-      <Link href="/shop" className="block">
-        <Button variant="outline" className="w-full">
-          Seguir comprando
+      {/* Botones de acción principales (Sin botones negros) */}
+      <div className="space-y-3 pt-2">
+        <Button
+          onClick={onCheckout}
+          disabled={itemCount === 0}
+          className="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm font-black h-12 gap-2 shadow-lg shadow-orange-600/20 hover:shadow-orange-600/30 transition-all rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        >
+          Proceder al Pago
+          <ArrowRight className="w-4 h-4" />
         </Button>
-      </Link>
 
-      {/* Trust Badges */}
-      <div className="text-center text-xs text-muted-foreground space-y-1">
-        <p>✓ Todos los datos están protegidos</p>
-        <p>✓ Devoluciones en 90 días</p>
+        <Link href="/shop" className="block">
+          <Button variant="outline" className="w-full h-11 bg-slate-100/80 border-slate-200 text-slate-700 hover:bg-slate-200/70 hover:text-slate-900 rounded-2xl font-bold text-xs transition-colors cursor-pointer">
+            Seguir comprando
+          </Button>
+        </Link>
+      </div>
+
+      {/* Sellos de garantía inferiores */}
+      <div className="text-center text-[11px] text-slate-400 space-y-1 pt-3 border-t border-slate-100 font-medium">
+        <p>✓ Transacción 100% segura y verificada</p>
+        <p>✓ Garantía de devolución de 90 días</p>
       </div>
     </div>
   )

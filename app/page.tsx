@@ -24,7 +24,6 @@ const CATEGORY_STYLES: Record<string, { icon: string; iconBg: string }> = {
   'Joyería': { icon: '💍', iconBg: 'bg-rose-100' },
 }
 
-// Componente Skeleton estilizado para la carga limpia tipo Temu
 function ProductSkeleton() {
   return (
     <div className="bg-white rounded-xl p-2.5 shadow-sm border border-gray-100 animate-pulse space-y-3 flex flex-col justify-between">
@@ -51,60 +50,67 @@ export default function Home() {
 
   const PAGE_SIZE = 10
   const observerRef = useRef<HTMLDivElement | null>(null)
-  const supabase = createClient()
 
-  // Carga inicial y por páginas
+  // Carga inicial y por páginas con el cliente instanciado de manera segura
   async function loadProducts(pageIndex: number) {
     if (pageIndex === 0) setInitialLoading(true)
     else setLoadingMore(true)
 
-    const from = pageIndex * PAGE_SIZE
-    const to = from + PAGE_SIZE - 1
+    try {
+      const supabase = createClient() 
+      const from = pageIndex * PAGE_SIZE
+      const to = from + PAGE_SIZE - 1
 
-    const { data: dbProducts, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .range(from, to)
+      const { data: dbProducts, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .range(from, to)
 
-    if (error) {
-      console.error('Error al cargar productos:', error)
-    } else if (dbProducts) {
-      const formatted = dbProducts.map((p) => ({
-        id: p.id,
-        name: p.name,
-        price: Number(p.price),
-        discountPrice: p.discount_price ? Number(p.discount_price) : null,
-        imageUrl: p.image_url,
-        badgeText: p.badge_text,
-        rating: p.rating || 5,
-        salesCount: p.sold_count || 0,
-      }))
+      if (error) {
+        console.error('Error al cargar productos de Supabase:', error.message)
+      } else if (dbProducts) {
+        // Tipado explícito de 'p: any' para evitar el subrayado rojo de TypeScript
+        const formatted = dbProducts.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          price: Number(p.price),
+          discountPrice: p.discount_price ? Number(p.discount_price) : null,
+          imageUrl: p.image_url,
+          badgeText: p.badge_text,
+          rating: p.rating || 5,
+          salesCount: p.sold_count || 0,
+        }))
 
-      if (dbProducts.length < PAGE_SIZE) {
-        setHasMore(false)
+        if (dbProducts.length < PAGE_SIZE) {
+          setHasMore(false)
+        }
+
+        setProducts((prev) => (pageIndex === 0 ? formatted : [...prev, ...formatted]))
       }
-
-      setProducts((prev) => (pageIndex === 0 ? formatted : [...prev, ...formatted]))
+    } catch (err) {
+      console.error('Fallo de red al conectar con Supabase:', err)
+    } finally {
+      setInitialLoading(false)
+      setLoadingMore(false)
     }
-
-    setInitialLoading(false)
-    setLoadingMore(false)
   }
 
   useEffect(() => {
-    // Carga inicial
     loadProducts(0)
 
-    // Cargar categorías
     async function fetchCategories() {
-      const { data } = await supabase.from('categories').select('*')
-      if (data) setCategories(data)
+      try {
+        const supabase = createClient()
+        const { data } = await supabase.from('categories').select('*')
+        if (data) setCategories(data)
+      } catch (err) {
+        console.error('Error al obtener categorías:', err)
+      }
     }
     fetchCategories()
   }, [])
 
-  // Infinite Scroll IntersectionObserver
   useEffect(() => {
     if (!hasMore || loadingMore) return
 
@@ -128,10 +134,7 @@ export default function Home() {
     <>
       <Header />
       
-      {/* Contenedor principal con fondo gris neutro estilo Temu */}
       <main className="min-h-screen bg-[#f5f5f5] text-gray-900 pb-16">
-
-        {/* Hero Banner Banner Promocional */}
         <section className="bg-gradient-to-r from-orange-500 via-orange-400 to-amber-400 py-8 md:py-12">
           <div className="max-w-[1380px] mx-auto px-3 sm:px-4 lg:px-6">
             <div className="grid md:grid-cols-2 gap-8 items-center">
@@ -175,7 +178,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Trust Bar Limpio */}
         <section className="bg-white border-b border-gray-200/60 py-2.5">
           <div className="max-w-[1380px] mx-auto px-3 sm:px-4 lg:px-6">
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2">
@@ -194,7 +196,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Trending Searches Limpio */}
         <section className="bg-white py-2.5 border-b border-gray-200/60 mb-5">
           <div className="max-w-[1380px] mx-auto px-3 sm:px-4 lg:px-6">
             <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
@@ -215,15 +216,11 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Estructura Central Principal con Márgenes Laterales exactos Temu */}
         <div className="max-w-[1380px] mx-auto px-3 sm:px-4 lg:px-6 space-y-6">
-          
-          {/* Ofertas Relámpago */}
           <section>
             <FlashDealsSection />
           </section>
 
-          {/* Categorías con fondo blanco nítido */}
           {categories.length > 0 && (
             <section className="bg-white rounded-xl shadow-sm border border-gray-200/60 p-4">
               <div className="flex items-center justify-between mb-3">
@@ -255,7 +252,6 @@ export default function Home() {
             </section>
           )}
 
-          {/* FEED INFINITO TIPO TEMU: 5 Productos por fila en Desktop */}
           <section className="pt-2">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-black text-gray-900 flex items-center gap-1.5 tracking-tight">
@@ -264,20 +260,17 @@ export default function Home() {
               </h2>
             </div>
 
-            {/* Grid Principal: Exactamente 5 columnas en lg/desktop y 2 en móvil */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5 sm:gap-3">
               {products.map((p, index) => (
                 <ProductCard key={`feed-${p.id}-${index}`} product={p} />
               ))}
 
-              {/* Skeletons limpios durante la carga */}
               {(initialLoading || loadingMore) &&
                 Array.from({ length: 10 }).map((_, i) => (
                   <ProductSkeleton key={`skeleton-${i}`} />
                 ))}
             </div>
 
-            {/* Observer de Scroll Infinito */}
             <div ref={observerRef} className="h-10 w-full mt-6 flex justify-center items-center">
               {loadingMore && (
                 <div className="flex items-center gap-2 text-xs text-gray-500 font-medium">
@@ -292,10 +285,8 @@ export default function Home() {
               )}
             </div>
           </section>
-
         </div>
 
-        {/* Footer */}
         <footer className="bg-gray-900 text-gray-300 mt-12 border-t border-gray-800">
           <div className="max-w-[1380px] mx-auto px-3 sm:px-4 lg:px-6 py-10">
             <div className="grid md:grid-cols-4 gap-8 mb-8">
@@ -338,7 +329,6 @@ export default function Home() {
             </div>
           </div>
         </footer>
-
       </main>
     </>
   )

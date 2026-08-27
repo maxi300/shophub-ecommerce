@@ -9,8 +9,11 @@ import { CheckCircle2, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 function SuccessContent() {
   const searchParams = useSearchParams();
   
-  // Wompi envía el ID de la orden bajo 'identificadorEnlaceComercio'
-  const orderId = searchParams.get('identificadorEnlaceComercio') || searchParams.get('order_id');
+  // Priorizamos 'order_id' (el ID interno de Supabase) para mostrar el número de orden real
+  const orderId = 
+    searchParams.get('order_id') || 
+    searchParams.get('identificadorEnlaceComercio') || 
+    searchParams.get('paypalOrderId');
   
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -57,7 +60,7 @@ function SuccessContent() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 bg-zinc-950 text-zinc-100">
         <Loader2 className="w-10 h-10 animate-spin text-orange-500" />
-        <p className="mt-4 text-zinc-400">Verificando el estado de tu pago con Wompi...</p>
+        <p className="mt-4 text-zinc-400">Verificando el estado de tu pago...</p>
       </div>
     );
   }
@@ -101,7 +104,7 @@ function SuccessContent() {
         <button
           onClick={handleManualVerify}
           disabled={isVerifying}
-          className="inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 px-5 py-3 rounded-xl font-medium transition text-sm disabled:opacity-50"
+          className="inline-flex items-center gap-2 bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 px-5 py-3 rounded-xl font-medium transition text-sm disabled:opacity-50 cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${isVerifying ? 'animate-spin' : ''}`} />
           ¿Pagaste y sigues aquí? Refrescar estado

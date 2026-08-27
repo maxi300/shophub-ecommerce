@@ -26,11 +26,11 @@ export function CartItemsSection({
 }: CartItemsSectionProps) {
   if (items.length === 0) {
     return (
-      <div className="bg-card border border-border rounded-lg p-12 text-center">
+      <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-xs">
         <div className="space-y-4">
-          <div className="inline-block p-4 bg-muted rounded-lg">
+          <div className="inline-block p-4 bg-orange-50 border border-orange-100 rounded-2xl text-orange-600">
             <svg
-              className="w-12 h-12 text-muted-foreground"
+              className="w-12 h-12"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -44,8 +44,8 @@ export function CartItemsSection({
             </svg>
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">Tu carrito está vacío</h3>
-            <p className="text-muted-foreground text-sm mt-1">
+            <h3 className="text-lg font-bold text-slate-900">Tu carrito está vacío</h3>
+            <p className="text-slate-500 text-sm mt-1">
               Agrega productos a tu carrito para comenzar
             </p>
           </div>
@@ -55,65 +55,58 @@ export function CartItemsSection({
   }
 
   return (
-    <div className="bg-card border border-border rounded-lg overflow-hidden">
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-border bg-muted/50">
-        <h2 className="text-lg font-bold text-foreground">
-          Artículos en tu carrito ({items.length})
+      <div className="px-6 py-4 border-b border-slate-200 bg-slate-50/50">
+        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+          Artículos en tu carrito <span className="text-orange-600 font-normal">({items.length})</span>
         </h2>
       </div>
 
       {/* Items List */}
-      <div className="divide-y divide-border">
+      <div className="divide-y divide-slate-100">
         {items.map((item) => (
           <div
             key={item.id}
-            className="px-6 py-4 flex gap-4 hover:bg-muted/30 transition-colors"
+            className="px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:bg-slate-50/60 transition-colors"
           >
-            {/* Image */}
-            <div className="flex-shrink-0">
-              <div className="w-24 h-24 bg-muted rounded-lg overflow-hidden">
-                {item.imageUrl ? (
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.productName}
-                    width={96}
-                    height={96}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                    Imagen no disponible
-                  </div>
-                )}
+            <div className="flex items-center gap-4 w-full sm:w-auto">
+              {/* Image Container */}
+              <div className="flex-shrink-0">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative shadow-inner">
+                  {item.imageUrl ? (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.productName}
+                      width={96}
+                      height={96}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs text-center p-2">
+                      Sin imagen
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base line-clamp-2">
+                  {item.productName}
+                </h3>
+                <p className="text-lg font-extrabold text-orange-600 mt-1">
+                  ${(item.price * item.quantity).toFixed(2)}
+                </p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  ${item.price.toFixed(2)} por unidad
+                </p>
               </div>
             </div>
 
-            {/* Details */}
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-foreground line-clamp-2">
-                {item.productName}
-              </h3>
-              <p className="text-lg font-bold text-primary mt-1">
-                ${(item.price * item.quantity).toFixed(2)}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                ${item.price.toFixed(2)} por unidad
-              </p>
-            </div>
-
-            {/* Quantity Controls */}
-            <div className="flex flex-col items-end justify-between">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onRemoveItem?.(item.id)}
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-
-              <div className="flex items-center border border-border rounded-lg">
+            {/* Quantity Controls & Actions */}
+            <div className="flex items-center justify-between w-full sm:w-auto gap-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+              <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -122,11 +115,11 @@ export function CartItemsSection({
                     onUpdateQuantity?.(item.id, item.quantity - 1)
                   }
                   disabled={item.quantity <= 1}
-                  className="p-1"
+                  className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors disabled:opacity-30 rounded-none h-9 w-9"
                 >
                   <Minus className="w-4 h-4" />
                 </Button>
-                <span className="px-3 py-1 text-center font-medium text-sm">
+                <span className="px-3.5 text-center font-bold text-sm text-slate-800 min-w-[36px]">
                   {item.quantity}
                 </span>
                 <Button
@@ -135,19 +128,30 @@ export function CartItemsSection({
                   onClick={() =>
                     onUpdateQuantity?.(item.id, item.quantity + 1)
                   }
-                  className="p-1"
+                  className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition-colors rounded-none h-9 w-9"
                 >
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onRemoveItem?.(item.id)}
+                className="text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-200 p-2 h-9 w-9"
+                title="Eliminar artículo"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         ))}
       </div>
 
       {/* Footer Info */}
-      <div className="px-6 py-4 bg-muted/30 border-t border-border text-sm text-muted-foreground">
-        <p>✓ Disponibilidad y precio confirmados hasta finalizar el pago</p>
+      <div className="px-6 py-3.5 bg-slate-50/80 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-2">
+        <span className="text-emerald-600 font-bold">✓</span>
+        <span>Disponibilidad y precio confirmados hasta finalizar el pago</span>
       </div>
     </div>
   )
