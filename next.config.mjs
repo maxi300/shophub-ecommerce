@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   allowedDevOrigins: [
-    '1294-2800-b20-108b-736d-70c2-2686-5d8-1b22.ngrok-free.app',
+    'fbac-138-97-141-210.ngrok-free.app/',
   ],
   images: {
     remotePatterns: [

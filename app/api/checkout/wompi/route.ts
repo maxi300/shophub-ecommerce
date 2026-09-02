@@ -1,3 +1,5 @@
+//api/checkout/wompi
+
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
@@ -7,7 +9,7 @@ export async function POST(req: Request) {
   try {
     const cookieStore = await cookies();
 
-    // 1. Cliente para autenticar al usuario (saber quién está comprando si ha iniciado sesión)
+    // 1. Cliente para autenticar al usuario actual
     const supabaseAuth = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -32,37 +34,73 @@ export async function POST(req: Request) {
     } = await supabaseAuth.auth.getUser();
 
     const body = await req.json();
-    const { total, shippingAddress, customerInfo, documentType, customerDocumentId, items } = body;
-
-    const parsedTotal = parseFloat(Number(total).toFixed(2));
+    const { shippingAddress, customerInfo, documentType, customerDocumentId, items } = body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: 'No se especificaron productos en el carrito.' }, { status: 400 });
     }
 
-    // 2. Cliente Admin con Service Role para evitar bloqueos de RLS al insertar la orden e ítems
+    // 2. Cliente Admin con Service Role para operaciones seguras en base de datos
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
-    // 3. Insertar directamente en la tabla orders usando el cliente Admin
+    // 3. Validación y cálculo seguro de precios en el servidor (evita manipulación del cliente)
+    const productIds = items.map((item: any) => item.id);
+    const { data: dbProducts, error: prodError } = await supabaseAdmin
+      .from('products')
+      .select('id, price, discount_price')
+      .in('id', productIds);
+
+    if (prodError || !dbProducts) {
+      return NextResponse.json({ error: 'Error al verificar los precios de los productos en la base de datos.' }, { status: 500 });
+    }
+
+    let calculatedTotal = 0;
+    const orderItemsPayload = items.map((item: any) => {
+      const dbProduct = dbProducts.find((p) => p.id === item.id);
+      if (!dbProduct) {
+        throw new Error(`Producto con ID ${item.id} no encontrado.`);
+      }
+
+      const unitPrice = dbProduct.discount_price ?? dbProduct.price;
+      const subtotalItem = unitPrice * item.quantity;
+      calculatedTotal += subtotalItem;
+
+      return {
+        order_id: '', // Se asignará tras crear la orden principal
+        product_id: item.id,
+        quantity: item.quantity,
+        price: unitPrice,
+        variant_selections: item.variantSelections || null
+      };
+    });
+
+    const parsedTotal = parseFloat(calculatedTotal.toFixed(2));
+
+    // 4. Inserción segura en la tabla orders
     const { data: orderData, error: orderError } = await supabaseAdmin
       .from('orders')
       .insert({
         user_id: user?.id || null,
         total: parsedTotal,
         subtotal: parsedTotal,
+        discount_amount: 0,
+        shipping_cost: 0,
+        tax_amount: 0,
         status: 'pending',
         payment_method: 'wompi',
-        shipping_address: shippingAddress.address,
-        shipping_city: shippingAddress.city,
-        shipping_postal_code: shippingAddress.postalCode || null,
+        shipping_address: shippingAddress?.address || '',
+        shipping_city: shippingAddress?.city || '',
+        shipping_postal_code: shippingAddress?.postalCode || null,
         shipping_country: 'El Salvador',
         notes: `Cliente: ${customerInfo.firstName} ${customerInfo.lastName} - Email: ${customerInfo.email}`,
         document_type: documentType || '01',
         customer_document_id: customerDocumentId || null,
-        customer_business_name: `${customerInfo.firstName} ${customerInfo.lastName}`
+        customer_business_name: `${customerInfo.firstName} ${customerInfo.lastName}`,
+        payment_status: 'pending',
+        stock_deducted: false
       })
       .select('id')
       .single();
@@ -74,18 +112,15 @@ export async function POST(req: Request) {
 
     const orderId = orderData.id;
 
-    // 4. Insertar los ítems asociados en la tabla order_items usando el cliente Admin
-    const orderItemsPayload = items.map((item: any) => ({
-      order_id: orderId,
-      product_id: item.id,
-      quantity: item.quantity,
-      price: item.price,
-      variant_selections: item.variantSelections || null
+    // 5. Vincular y registrar los ítems de la orden
+    const finalOrderItemsPayload = orderItemsPayload.map(item => ({
+      ...item,
+      order_id: orderId
     }));
 
     const { error: itemsError } = await supabaseAdmin
       .from('order_items')
-      .insert(orderItemsPayload);
+      .insert(finalOrderItemsPayload);
 
     if (itemsError) {
       console.error('Error al registrar items de la orden:', itemsError);
@@ -97,12 +132,12 @@ export async function POST(req: Request) {
 
     if (!clientId || !clientSecret) {
       return NextResponse.json(
-        { error: 'Faltan las variables WOMPI_APP_ID o WOMPI_API_SECRET en .env.local' },
+        { error: 'Faltan las credenciales de Wompi en las variables de entorno' },
         { status: 500 }
       );
     }
 
-    // 5. Autenticación contra Wompi El Salvador
+    // 6. Autenticación con la API de Wompi El Salvador
     const authResponse = await fetch('https://id.wompi.sv/connect/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -118,12 +153,12 @@ export async function POST(req: Request) {
 
     if (!authResponse.ok || !authData.access_token) {
       return NextResponse.json(
-        { error: `Error de autenticación: ${authData.error || 'Token no recibido'}` },
+        { error: `Error de autenticación en Wompi: ${authData.error || 'Token no recibido'}` },
         { status: 500 }
       );
     }
 
-    // 6. Crear el Enlace de Pago API en Wompi precargando los datos del cliente
+    // 7. Generación del enlace de pago en Wompi
     const wompiPayload = {
       identificadorEnlaceComercio: orderId,
       monto: parsedTotal,
@@ -141,7 +176,7 @@ export async function POST(req: Request) {
       esMontoEditable: false,
       esCantidadEditable: false,
       cantidad: 1,
-      urlRedireccion: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://b831-138-97-141-210.ngrok-free.app/'}/checkout/success?order_id=${orderId}`,
+      urlRedireccion: `${process.env.NEXT_PUBLIC_SITE_URL}/checkout/success?order_id=${orderId}`
     };
 
     const wompiResponse = await fetch('https://api.wompi.sv/EnlacePago', {
@@ -174,7 +209,7 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error('Error en API route:', error);
-    return NextResponse.json({ error: error.message || 'Error interno' }, { status: 500 });
+    console.error('Error crítico en API route de Wompi:', error);
+    return NextResponse.json({ error: error.message || 'Error interno del servidor' }, { status: 500 });
   }
 }

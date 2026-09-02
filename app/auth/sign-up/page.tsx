@@ -16,6 +16,8 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function Page() {
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
@@ -40,6 +42,11 @@ export default function Page() {
         email,
         password,
         options: {
+          // AQUÍ PASAMOS LOS DATOS PARA QUE EL TRIGGER DE LA BD LOS GUARDE EN "profiles"
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+          },
           emailRedirectTo:
             process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
             `${window.location.origin}/auth/callback`,
@@ -47,13 +54,11 @@ export default function Page() {
       })
 
       if (signUpError) {
-        // Extraemos explícitamente la propiedad .message para asegurar que siempre guarde un string
         throw new Error(signUpError.message || 'Error creating account')
       }
 
       router.push('/auth/sign-up-success')
     } catch (err: unknown) {
-      // Manejo seguro de la variable de error
       if (err instanceof Error) {
         setError(err.message)
       } else if (typeof err === 'object' && err !== null && 'message' in err) {
@@ -77,7 +82,33 @@ export default function Page() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSignUp}>
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4">
+                  {/* Nuevos campos de Nombre y Apellido */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="firstName">Nombre</Label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        placeholder="Max"
+                        required
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="lastName">Apellido</Label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        placeholder="Quinteros"
+                        required
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
                   <div className="grid gap-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -90,9 +121,7 @@ export default function Page() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <div className="flex items-center">
-                      <Label htmlFor="password">Contraseña</Label>
-                    </div>
+                    <Label htmlFor="password">Contraseña</Label>
                     <Input
                       id="password"
                       type="password"
@@ -102,9 +131,7 @@ export default function Page() {
                     />
                   </div>
                   <div className="grid gap-2">
-                    <div className="flex items-center">
-                      <Label htmlFor="repeat-password">Repetir contraseña</Label>
-                    </div>
+                    <Label htmlFor="repeat-password">Repetir contraseña</Label>
                     <Input
                       id="repeat-password"
                       type="password"
@@ -114,7 +141,6 @@ export default function Page() {
                     />
                   </div>
 
-                  {/* Renderizado formateado del mensaje de error */}
                   {error && (
                     <div className="rounded-md bg-destructive/15 border border-destructive/30 p-3 text-xs text-destructive font-medium">
                       {typeof error === 'string' ? error : JSON.stringify(error)}

@@ -1,12 +1,11 @@
 'use client'
 
-import { Header } from '@/components/header'
 import { CartItemsSection } from '@/components/cart-items-section'
 import { CartSummary } from '@/components/cart-summary'
 import { useCart } from '@/lib/cart-context'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ChevronRight, ShoppingBag, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react'
+import { ChevronRight, ShoppingBag, ShieldCheck, ArrowLeft, Sparkles, ArrowRight } from 'lucide-react'
 
 export default function CartPage() {
   const router = useRouter()
@@ -39,46 +38,32 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col selection:bg-orange-500 selection:text-white">
-      <Header />
-      
-      {/* Barra de Navegación / Migas de pan estilo E-commerce Pro */}
-      <div className="bg-white border-b border-slate-200 py-3 shadow-2xs">
+      {/* Barra superior de navegación minimalista y segura estilo Checkout Pro */}
+      <div className="bg-white border-b border-slate-200 py-3.5 shadow-2xs">
         <div className="max-w-[1380px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-              <Link href="/" className="hover:text-orange-600 transition-colors">Inicio</Link>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-              <span className="text-slate-900 font-semibold">Carrito de Compras</span>
-            </div>
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-emerald-700 font-semibold bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/60">
+            <button
+              onClick={() => router.push('/')}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-orange-600 transition-colors bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-xs cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 text-orange-600" />
+              <span>Volver a la tienda</span>
+            </button>
+            <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-semibold bg-emerald-50 px-3.5 py-1 rounded-full border border-emerald-200/60">
               <ShieldCheck className="w-4 h-4 text-emerald-600" />
-              <span>Transacción encriptada de extremo a extremo</span>
+              <span className="hidden sm:inline">Transacción encriptada de extremo a extremo</span>
+              <span className="sm:hidden">Checkout Seguro</span>
             </div>
           </div>
         </div>
       </div>
 
       <main className="flex-1 max-w-[1380px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-        {/* Cabecera de la sección */}
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-slate-200 pb-6">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 border border-orange-200 text-orange-800 text-xs font-bold mb-3 shadow-2xs">
-              <ShoppingBag className="w-3.5 h-3.5 text-orange-600" />
-              Paso 1 de 3 · Verificación de pedido
-            </div>
-            <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-              Tu Carrito <span className="text-orange-600 font-light">({displayItems.length} {displayItems.length === 1 ? 'artículo' : 'artículos'})</span>
-            </h1>
-          </div>
-
-          {displayItems.length > 0 && (
-            <button
-              onClick={() => router.push('/shop')}
-              className="text-xs font-bold text-slate-700 hover:text-orange-600 transition-colors flex items-center gap-1 bg-white px-4 py-2.5 rounded-xl border border-slate-200 shadow-xs self-start md:self-auto hover:border-slate-300 cursor-pointer"
-            >
-              Seguir explorando la tienda <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
+        {/* Migas de pan limpias */}
+        <div className="flex items-center gap-2 text-xs font-medium text-slate-500 mb-6">
+          <Link href="/" className="hover:text-orange-600 transition-colors">Inicio</Link>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+          <span className="text-slate-900 font-semibold">Carrito de Compras</span>
         </div>
 
         {displayItems.length === 0 ? (
@@ -89,20 +74,25 @@ export default function CartPage() {
             </div>
             <h2 className="text-2xl font-black text-slate-900 mb-2">Tu carrito está vacío</h2>
             <p className="text-sm text-slate-500 mb-6 leading-relaxed">
-              Parece que aún no has agregado ningún producto increíble a tu carrito. ¡Explora nuestras ofertas relámpago!
+              Parece que aún no has agregado ningún producto increíble a tu carrito. ¡Explora nuestra tienda!
             </p>
             <Link
               href="/shop"
               className="inline-flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-black px-6 py-3 rounded-xl transition-all shadow-md text-sm"
             >
-              Descubrir ofertas ahora <ArrowRight className="w-4 h-4" />
+              Descubrir productos ahora <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         ) : (
           /* Grid Principal Claro y Pro */
           <div className="grid lg:grid-cols-12 gap-8 items-start">
-            {/* Columna Izquierda: Artículos (8 columnas) */}
+            {/* Columna Izquierda: Indicador de paso + Artículos (8 columnas) */}
             <div className="lg:col-span-8 space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-100 border border-orange-200 text-orange-800 text-xs font-bold shadow-2xs">
+                <ShoppingBag className="w-3.5 h-3.5 text-orange-600" />
+                Paso 1 de 3 · Verificación de pedido
+              </div>
+
               <CartItemsSection
                 items={displayItems}
                 onUpdateQuantity={handleUpdateQuantity}

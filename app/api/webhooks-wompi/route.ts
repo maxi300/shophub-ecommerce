@@ -33,49 +33,75 @@ export async function POST(req: Request) {
       resultadoTransaccion === 'COMPLETE';
 
     if (identificadorEnlaceComercio && esExitoso) {
-      // 3. Actualizar el estado de la orden a 'processing' y 'paid'
-      const { error: orderError } = await supabaseAdmin
+      // 1. Buscamos la orden y su estado actual de stock_deducted para garantizar idempotencia
+      const { data: currentOrder, error: findError } = await supabaseAdmin
         .from('orders')
-        .update({ status: 'processing', payment_status: 'paid' })
-        .eq('id', identificadorEnlaceComercio);
+        .select('id, stock_deducted')
+        .eq('id', identificadorEnlaceComercio)
+        .single();
 
-      if (orderError) {
-        console.error('Error actualizando orden en Supabase:', orderError);
-        throw orderError;
+      if (findError || !currentOrder) {
+        console.error('No se encontró una orden local asociada al ID de Wompi:', identificadorEnlaceComercio);
+        return NextResponse.json({ error: 'Orden no encontrada' }, { status: 404 });
       }
 
-      // 4. Obtener los productos asociados a esta orden
-      const { data: orderItems, error: itemsError } = await supabaseAdmin
-        .from('order_items')
-        .select('product_id, quantity')
-        .eq('order_id', identificadorEnlaceComercio);
+      // 2. Si la orden aún no tiene el stock descontado, procedemos de forma atómica
+      if (!currentOrder.stock_deducted) {
+        
+        // A. Obtener los productos asociados a esta orden
+        const { data: orderItems, error: itemsError } = await supabaseAdmin
+          .from('order_items')
+          .select('product_id, quantity')
+          .eq('order_id', identificadorEnlaceComercio);
 
-      if (itemsError) {
-        console.error('Error obteniendo order_items:', itemsError);
-        throw itemsError;
-      }
+        if (itemsError) {
+          console.error('Error obteniendo order_items:', itemsError);
+          throw itemsError;
+        }
 
-      // 5. Recorrer cada producto para descontar su stock de forma segura
-      if (orderItems && orderItems.length > 0) {
-        for (const item of orderItems) {
-          const { data: productData, error: prodFetchError } = await supabaseAdmin
-            .from('products')
-            .select('stock')
-            .eq('id', item.product_id)
-            .single();
-
-          if (!prodFetchError && productData) {
-            const nuevoStock = Math.max(0, productData.stock - item.quantity);
-
-            await supabaseAdmin
+        // B. Recorrer cada producto para descontar su stock de forma segura
+        if (orderItems && orderItems.length > 0) {
+          for (const item of orderItems) {
+            const { data: productData, error: prodFetchError } = await supabaseAdmin
               .from('products')
-              .update({ stock: nuevoStock })
-              .eq('id', item.product_id);
-            
-            console.log(`¡STOCK DESCONTADO! Producto ${item.product_id}: stock anterior = ${productData.stock}, nuevo stock = ${nuevoStock}`);
+              .select('stock')
+              .eq('id', item.product_id)
+              .single();
+
+            if (!prodFetchError && productData) {
+              const nuevoStock = Math.max(0, productData.stock - item.quantity);
+
+              await supabaseAdmin
+                .from('products')
+                .update({ stock: nuevoStock })
+                .eq('id', item.product_id);
+              
+              console.log(`¡STOCK DESCONTADO! Producto ${item.product_id}: stock anterior = ${productData.stock}, nuevo stock = ${nuevoStock}`);
+            }
           }
         }
+
+        // C. Actualizar el estado de la orden a 'processing', 'paid' y marcar stock_deducted como true
+        const { error: orderError } = await supabaseAdmin
+          .from('orders')
+          .update({ 
+            status: 'processing', 
+            payment_status: 'paid',
+            stock_deducted: true,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', identificadorEnlaceComercio);
+
+        if (orderError) {
+          console.error('Error actualizando orden en Supabase:', orderError);
+          throw orderError;
+        }
+
+        console.log(`Orden ${identificadorEnlaceComercio} procesada: stock descontado y estado actualizado.`);
+      } else {
+        console.log(`La orden ${identificadorEnlaceComercio} ya había procesado su stock previamente (idempotencia garantizada).`);
       }
+
     } else {
       console.log('No se cumplieron las condiciones: falta identificador o la transacción no fue exitosa.');
     }

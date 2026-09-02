@@ -148,8 +148,8 @@ export function Header() {
             </div>
           </div>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Right Actions - Oculto en móvil (hidden md:flex) para evitar duplicidad con la barra inferior */}
+          <div className="hidden md:flex items-center gap-2 shrink-0">
             <Link href="/cart" className="relative flex flex-col items-center gap-0.5 text-white hover:text-orange-100 transition-colors p-2">
               <div className="relative">
                 <ShoppingCart className="w-6 h-6" />
@@ -185,6 +185,15 @@ export function Header() {
                     <p className="text-xs text-gray-400">Sesión iniciada como</p>
                     <p className="text-sm font-semibold text-gray-800 truncate">{user.email}</p>
                   </div>
+
+                  <Link
+                    href="/perfil/pedidos"
+                    onClick={() => setAccountMenuOpen(false)}
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    📦 Mis Pedidos
+                  </Link>
+
                   {isAdmin && (
                     <Link
                       href="/admin"

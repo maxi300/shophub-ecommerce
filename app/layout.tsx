@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { CartProvider } from '@/lib/cart-context'
+import { MobileNav } from '@/components/mobile-nav'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -20,9 +21,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className="bg-background" suppressHydrationWarning>
-      <body className="antialiased bg-background text-foreground">
+      <body className="antialiased bg-background text-foreground pb-20 md:pb-0">
         <CartProvider>
           {children}
+          <MobileNav />
           {process.env.NODE_ENV === 'production' && <Analytics />}
         </CartProvider>
       </body>

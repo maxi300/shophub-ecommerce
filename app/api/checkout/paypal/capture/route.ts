@@ -1,3 +1,4 @@
+// app/api/checkout/paypal/capture/route.ts
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import checkoutNodeJssdk from '@paypal/checkout-server-sdk';
@@ -35,37 +36,20 @@ export async function POST(req: Request) {
 
     if (captureResult.status === 'COMPLETED') {
       
+      // Actualizamos únicamente el estado base de la orden. 
+      // El descuento de stock y la actualización profunda quedan a cargo exclusivo del Webhook de PayPal.
       const { error: updateError } = await supabaseAdmin
         .from('orders')
-        .update({ status: 'processing', payment_status: 'paid' })
+        .update({ 
+          status: 'processing', 
+          payment_status: 'paid',
+          updated_at: new Date().toISOString()
+        })
         .eq('id', orderId);
 
       if (updateError) {
         console.error('Error actualizando orden tras pago de PayPal:', updateError);
         throw updateError;
-      }
-
-      const { data: orderItems, error: itemsError } = await supabaseAdmin
-        .from('order_items')
-        .select('product_id, quantity')
-        .eq('order_id', orderId);
-
-      if (!itemsError && orderItems) {
-        for (const item of orderItems) {
-          const { data: productData } = await supabaseAdmin
-            .from('products')
-            .select('stock')
-            .eq('id', item.product_id)
-            .single();
-
-          if (productData) {
-            const nuevoStock = Math.max(0, productData.stock - item.quantity);
-            await supabaseAdmin
-              .from('products')
-              .update({ stock: nuevoStock })
-              .eq('id', item.product_id);
-          }
-        }
       }
 
       return NextResponse.json({ success: true, captureId: captureResult.id }, { status: 200 });
